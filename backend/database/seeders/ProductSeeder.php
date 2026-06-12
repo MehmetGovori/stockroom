@@ -22,6 +22,12 @@ class ProductSeeder extends Seeder
             ['name' => 'Brass Watering Can', 'sku' => 'WTR-0509', 'price' => 64.00, 'stock_quantity' => 9, 'category' => 'Garden'],
             ['name' => 'Terracotta Plant Pot', 'sku' => 'POT-0144', 'price' => 12.50, 'stock_quantity' => 30, 'category' => 'Garden'],
             ['name' => 'Leather Care Kit', 'sku' => 'LTH-0388', 'price' => 34.00, 'stock_quantity' => 1, 'category' => 'Care'],
+            ['name' => 'Enamel Pour-Over Pot', 'sku' => 'KTL-0067', 'price' => 58.00, 'stock_quantity' => 14, 'category' => 'Kitchen'],
+            ['name' => 'Olive Wood Spoon Set', 'sku' => 'UTN-0231', 'price' => 26.00, 'stock_quantity' => 22, 'category' => 'Kitchen'],
+            ['name' => 'Striped Tea Towel', 'sku' => 'TWL-0204', 'price' => 13.50, 'stock_quantity' => 4, 'category' => 'Textiles'],
+            ['name' => 'Glazed Serving Bowl', 'sku' => 'BWL-0118', 'price' => 41.00, 'stock_quantity' => 7, 'category' => 'Ceramics'],
+            ['name' => 'Soy Wax Tin Candle', 'sku' => 'CDL-0461', 'price' => 18.00, 'stock_quantity' => 0, 'category' => 'Home'],
+            ['name' => 'Hand Trowel', 'sku' => 'GRD-0742', 'price' => 21.00, 'stock_quantity' => 16, 'category' => 'Garden'],
         ];
 
         foreach ($products as $product) {

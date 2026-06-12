@@ -21,7 +21,7 @@ class OrderApiTest extends TestCase
                 ['product_id' => $kettle->id, 'quantity' => 2],
                 ['product_id' => $mug->id, 'quantity' => 3],
             ],
-        ]);
+        ], $this->apiKeyHeaders());
 
         $response->assertCreated()
             ->assertJsonPath('data.status', 'confirmed')
@@ -32,6 +32,18 @@ class OrderApiTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $mug->id, 'stock_quantity' => 57]);
     }
 
+    public function test_it_requires_an_api_key_to_place_an_order(): void
+    {
+        $product = Product::factory()->stock(5)->create();
+
+        $this->postJson('/api/orders', [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertUnauthorized();
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock_quantity' => 5]);
+    }
+
     public function test_it_rejects_an_order_that_exceeds_stock_and_leaves_stock_untouched(): void
     {
         $product = Product::factory()->stock(3)->create();
@@ -40,7 +52,7 @@ class OrderApiTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 5],
             ],
-        ]);
+        ], $this->apiKeyHeaders());
 
         $response->assertStatus(409)
             ->assertJsonPath('errors.items.0.product_id', $product->id)
@@ -53,7 +65,7 @@ class OrderApiTest extends TestCase
 
     public function test_it_validates_an_empty_order(): void
     {
-        $this->postJson('/api/orders', ['items' => []])
+        $this->postJson('/api/orders', ['items' => []], $this->apiKeyHeaders())
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['items']);
     }
@@ -67,7 +79,7 @@ class OrderApiTest extends TestCase
                 ['product_id' => $product->id, 'quantity' => 2],
                 ['product_id' => $product->id, 'quantity' => 3],
             ],
-        ]);
+        ], $this->apiKeyHeaders());
 
         $response->assertCreated()->assertJsonPath('data.total', fn ($total) => (float) $total === 50.0);
 
@@ -80,10 +92,10 @@ class OrderApiTest extends TestCase
 
         $first = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-        ]);
+        ], $this->apiKeyHeaders());
         $second = $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
-        ]);
+        ], $this->apiKeyHeaders());
 
         $first->assertCreated();
         $second->assertStatus(409);
@@ -98,7 +110,7 @@ class OrderApiTest extends TestCase
 
         $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
-        ])->assertCreated();
+        ], $this->apiKeyHeaders())->assertCreated();
 
         $response = $this->getJson('/api/orders');
 

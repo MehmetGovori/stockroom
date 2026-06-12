@@ -19,6 +19,23 @@ class ProductApiTest extends TestCase
         $response->assertOk()->assertJsonCount(3, 'data');
     }
 
+    public function test_it_paginates_products(): void
+    {
+        Product::factory()->count(15)->create();
+
+        $page1 = $this->getJson('/api/products?per_page=10');
+        $page1->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.total', 15)
+            ->assertJsonPath('meta.per_page', 10)
+            ->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/api/products?per_page=10&page=2')
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.current_page', 2);
+    }
+
     public function test_it_filters_products_by_search(): void
     {
         Product::factory()->create(['name' => 'Copper Pan', 'sku' => 'PAN-0001']);
@@ -31,6 +48,17 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.0.sku', 'PAN-0001');
     }
 
+    public function test_it_lists_distinct_categories(): void
+    {
+        Product::factory()->create(['category' => 'Kitchen']);
+        Product::factory()->create(['category' => 'Kitchen']);
+        Product::factory()->create(['category' => 'Garden']);
+
+        $response = $this->getJson('/api/products/categories');
+
+        $response->assertOk()->assertExactJson(['data' => ['Garden', 'Kitchen']]);
+    }
+
     public function test_it_creates_a_product(): void
     {
         $payload = [
@@ -41,7 +69,7 @@ class ProductApiTest extends TestCase
             'category' => 'Ceramics',
         ];
 
-        $response = $this->postJson('/api/products', $payload);
+        $response = $this->postJson('/api/products', $payload, $this->apiKeyHeaders());
 
         $response->assertCreated()
             ->assertJsonPath('data.sku', 'BWL-0500')
@@ -50,9 +78,28 @@ class ProductApiTest extends TestCase
         $this->assertDatabaseHas('products', ['sku' => 'BWL-0500', 'stock_quantity' => 15]);
     }
 
+    public function test_it_requires_an_api_key_for_writes(): void
+    {
+        $product = Product::factory()->create();
+
+        $payload = [
+            'name' => 'No Key',
+            'sku' => 'NOK-0001',
+            'price' => 10,
+            'stock_quantity' => 5,
+            'category' => 'Home',
+        ];
+
+        $this->postJson('/api/products', $payload)->assertUnauthorized();
+        $this->putJson("/api/products/{$product->id}", $payload)->assertUnauthorized();
+        $this->deleteJson("/api/products/{$product->id}")->assertUnauthorized();
+
+        $this->assertDatabaseMissing('products', ['sku' => 'NOK-0001']);
+    }
+
     public function test_it_validates_product_creation(): void
     {
-        $response = $this->postJson('/api/products', []);
+        $response = $this->postJson('/api/products', [], $this->apiKeyHeaders());
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['name', 'sku', 'price', 'stock_quantity', 'category']);
@@ -68,7 +115,7 @@ class ProductApiTest extends TestCase
             'price' => 10,
             'stock_quantity' => 5,
             'category' => 'Home',
-        ]);
+        ], $this->apiKeyHeaders());
 
         $response->assertUnprocessable()->assertJsonValidationErrors(['sku']);
     }
@@ -83,7 +130,7 @@ class ProductApiTest extends TestCase
             'price' => 99.99,
             'stock_quantity' => 7,
             'category' => $product->category,
-        ]);
+        ], $this->apiKeyHeaders());
 
         $response->assertOk()->assertJsonPath('data.price', fn ($price) => (float) $price === 99.99);
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock_quantity' => 7]);
@@ -93,7 +140,7 @@ class ProductApiTest extends TestCase
     {
         $product = Product::factory()->create();
 
-        $this->deleteJson("/api/products/{$product->id}")->assertNoContent();
+        $this->deleteJson("/api/products/{$product->id}", [], $this->apiKeyHeaders())->assertNoContent();
 
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }

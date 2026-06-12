@@ -15,6 +15,8 @@ class ProductController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
+        $perPage = min(max($request->integer('per_page', config('stockroom.products_per_page')), 1), 50);
+
         $products = Product::query()
             ->when($request->string('search')->toString(), function ($query, string $search) {
                 $query->where(function ($inner) use ($search) {
@@ -26,9 +28,21 @@ class ProductController extends Controller
                 $query->where('category', $category);
             })
             ->orderBy('name')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return ProductResource::collection($products);
+    }
+
+    public function categories(): JsonResponse
+    {
+        $categories = Product::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return response()->json(['data' => $categories]);
     }
 
     public function store(StoreProductRequest $request): JsonResponse
