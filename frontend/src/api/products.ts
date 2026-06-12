@@ -1,8 +1,18 @@
 import { http } from './http'
-import type { Product, ProductInput } from '../types'
+import type { PageMeta, Product, ProductInput, ProductPage, ProductQuery } from '../types'
 
-export async function fetchProducts(params?: { search?: string; category?: string }): Promise<Product[]> {
-  const { data } = await http.get<{ data: Product[] }>('/products', { params })
+export async function fetchProducts(params: ProductQuery = {}): Promise<ProductPage> {
+  const { data } = await http.get<{ data: Product[]; meta: PageMeta }>('/products', { params })
+  return { items: data.data, meta: data.meta }
+}
+
+export async function fetchProduct(id: number): Promise<Product> {
+  const { data } = await http.get<{ data: Product }>(`/products/${id}`)
+  return data.data
+}
+
+export async function fetchCategories(): Promise<string[]> {
+  const { data } = await http.get<{ data: string[] }>('/products/categories')
   return data.data
 }
 

@@ -51,32 +51,45 @@ npm install
 npm run dev                  # http://localhost:5173
 ```
 
-The frontend reads the API base URL from `VITE_API_URL` (defaults to
-`http://localhost:8000/api`).
+The frontend reads `VITE_API_URL` (defaults to `http://localhost:8000/api`) and
+`VITE_API_KEY` (the value of the backend's `API_KEY`, sent on write requests). For local
+dev, add them to `frontend/.env`; the Docker build passes them as build args.
 
 ---
 
 ## API
 
-Base path: `/api`. All responses are JSON wrapped in a `data` key.
+Base path: `/api`. All responses are JSON wrapped in a `data` key. Write endpoints
+(marked 🔑) require an `X-API-Key` header — see [Authentication](#authentication).
 
 ### Products
 
-| Method   | Endpoint          | Description                                   |
-| -------- | ----------------- | --------------------------------------------- |
-| `GET`    | `/products`       | List products (`?search=` and `?category=`)   |
-| `POST`   | `/products`       | Create a product                              |
-| `GET`    | `/products/{id}`  | Show a product                                |
-| `PUT`    | `/products/{id}`  | Update a product                              |
-| `DELETE` | `/products/{id}`  | Delete a product (blocked if it has orders)   |
+| Method   | Endpoint               | Auth | Description                                                      |
+| -------- | ---------------------- | :--: | ---------------------------------------------------------------- |
+| `GET`    | `/products`            |  —   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` |  —   | Distinct category names (for the filter UI)                     |
+| `GET`    | `/products/{id}`       |  —   | Show a product                                                  |
+| `POST`   | `/products`            | 🔑   | Create a product                                                |
+| `PUT`    | `/products/{id}`       | 🔑   | Update a product                                                |
+| `DELETE` | `/products/{id}`       | 🔑   | Delete a product (blocked if it has orders)                     |
+
+Paginated responses include Laravel's `links` and `meta` (`current_page`, `last_page`,
+`per_page`, `total`).
 
 ### Orders
 
-| Method | Endpoint        | Description                                    |
-| ------ | --------------- | ---------------------------------------------- |
-| `GET`  | `/orders`       | List orders with line items and totals         |
-| `POST` | `/orders`       | Place an order, validating and decrementing stock |
-| `GET`  | `/orders/{id}`  | Show an order                                  |
+| Method | Endpoint        | Auth | Description                                        |
+| ------ | --------------- | :--: | ------------------------------------------------- |
+| `GET`  | `/orders`       |  —   | List orders with line items and totals            |
+| `GET`  | `/orders/{id}`  |  —   | Show an order                                     |
+| `POST` | `/orders`       | 🔑   | Place an order, validating and decrementing stock |
+
+### Authentication
+
+Reads are public; writes require a shared secret sent as `X-API-Key`, compared with
+`hash_equals` against the `API_KEY` env var. A missing or wrong key returns `401`. This is
+the lightest credible guard for an internal operator tool; a JWT/session layer would be the
+next step for real multi-user auth.
 
 **Place an order**
 
@@ -145,9 +158,9 @@ Models                Eloquent models + relationships
 - A dedicated `OrderService` is the only "pattern" introduced, because the order path is
   the one place with real invariants. Products are simple CRUD and don't need a service
   layer — adding one would be ceremony without payoff.
-- The product list returns the full set (with optional `search`/`category` filtering)
-  rather than paginating. For a catalog of this size that's the simpler, correct choice;
-  pagination is noted under "what I'd do with more time".
+- The product list uses offset pagination (`page`/`per_page`) with server-side
+  `search`/`category` filtering. Offset paging is the simplest correct choice at this scale;
+  cursor pagination is noted under "what I'd do with more time".
 
 ---
 
@@ -244,10 +257,13 @@ order/stock logic that matters most:
 
 ## Stretch goal coverage
 
-The exercise asks candidates to pick at most one optional stretch goal. This submission
-implements clean Dockerization and also includes a small CI workflow. Product filtering is
-included; pagination and write-endpoint auth are intentionally left out so the core stock
-and order flow stays focused.
+The exercise lists four optional stretch goals and asks for at most one. The core was built
+first and kept solid; the stretch goals were then layered on without disturbing it:
+
+- **Multi-stage Docker + compose** — `docker compose up` from a clean checkout.
+- **CI workflow** — lint + tests on every push (backend runs against a MySQL service).
+- **API-key auth** — the `X-API-Key` guard on all write endpoints.
+- **Pagination + filtering** — server-side `page`/`per_page` with `search`/`category`.
 
 ---
 
@@ -264,12 +280,10 @@ Laravel translation files.
 
 - **A true concurrency test** spinning up parallel processes against MySQL to assert the
   lock empirically, rather than relying on sequential logic tests.
-- **Pagination + server-side filtering** on the product list, with matching cursor-based
-  API responses.
-- **Auth on write endpoints** (API key or JWT) — currently all endpoints are open, which
-  is fine for the exercise scope but not for production.
+- **Cursor pagination** for the product list instead of offset pages, for stable paging
+  under concurrent inserts.
+- **Real multi-user auth** (JWT/Sanctum with roles) in place of the single shared API key.
 - **Domain events** (`OrderPlaced`) to decouple side effects like emails or low-stock
   alerts from the order transaction.
-- **A production PHP-FPM + nginx image** instead of `artisan serve`, and CI extended to
-  run the suite against a real MySQL service.
+- **A production PHP-FPM + nginx image** instead of `artisan serve`.
 - **Optimistic-lock fallback** for high-contention catalogs, chosen per-product.

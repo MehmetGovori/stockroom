@@ -34,6 +34,10 @@ export default {
     empty: 'No products match.',
     addFirst: 'Add the first one →',
     loadError: 'Unable to load products.',
+    count: '{total} products',
+    page: 'Page {page} of {pages}',
+    prev: 'Prev',
+    next: 'Next',
   },
   review: {
     eyebrow: 'Checkout',

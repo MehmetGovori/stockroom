@@ -34,6 +34,10 @@ export default {
     empty: 'Asnjë produkt nuk përputhet.',
     addFirst: 'Shto të parin →',
     loadError: 'Produktet nuk mund të ngarkohen.',
+    count: '{total} produkte',
+    page: 'Faqja {page} nga {pages}',
+    prev: 'Mbrapa',
+    next: 'Para',
   },
   review: {
     eyebrow: 'Arkëtimi',

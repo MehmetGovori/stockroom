@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { AxiosError } from 'axios'
-import { createProduct, updateProduct } from '../api/products'
+import { createProduct, fetchProduct, updateProduct } from '../api/products'
 import { useProductStore } from '../stores/products'
 import type { ApiError, ProductInput } from '../types'
 
@@ -28,14 +28,15 @@ const saving = ref(false)
 
 onMounted(async () => {
   if (!props.id) return
-  if (productStore.items.length === 0) await productStore.load()
-  const existing = productStore.byId(Number(props.id))
-  if (existing) {
+  try {
+    const existing = await fetchProduct(Number(props.id))
     form.name = existing.name
     form.sku = existing.sku
     form.price = existing.price
     form.stock_quantity = existing.stock_quantity
     form.category = existing.category
+  } catch {
+    errorMessage.value = t('productForm.saveError')
   }
 })
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -11,28 +11,44 @@ import StockTag from '../components/StockTag.vue'
 const productStore = useProductStore()
 const cart = useCartStore()
 const { t } = useI18n()
-const { items, loading, error } = storeToRefs(productStore)
+const { items, meta, categories, loading, error } = storeToRefs(productStore)
 
 const search = ref('')
 const category = ref('')
+const page = ref(1)
+let debounce: ReturnType<typeof setTimeout> | undefined
 
-onMounted(() => productStore.load())
+function load() {
+  productStore.load({
+    search: search.value || undefined,
+    category: category.value || undefined,
+    page: page.value,
+  })
+}
 
-const categories = computed(() => {
-  const set = new Set(items.value.map((p) => p.category))
-  return Array.from(set).sort()
+onMounted(() => {
+  productStore.loadCategories()
+  load()
 })
 
-const filtered = computed(() =>
-  items.value.filter((p) => {
-    const matchesSearch =
-      !search.value ||
-      p.name.toLowerCase().includes(search.value.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.value.toLowerCase())
-    const matchesCategory = !category.value || p.category === category.value
-    return matchesSearch && matchesCategory
-  }),
-)
+watch(category, () => {
+  page.value = 1
+  load()
+})
+
+watch(search, () => {
+  if (debounce) clearTimeout(debounce)
+  debounce = setTimeout(() => {
+    page.value = 1
+    load()
+  }, 300)
+})
+
+function goTo(target: number) {
+  if (target < 1 || target > meta.value.last_page || target === meta.value.current_page) return
+  page.value = target
+  load()
+}
 
 function inCart(productId: number): number {
   return cart.lineFor(productId)?.quantity ?? 0
@@ -62,48 +78,63 @@ function inCart(productId: number): number {
 
     <div v-if="loading" class="state">{{ t('products.loading') }}</div>
 
-    <div v-else-if="filtered.length === 0" class="state">
+    <div v-else-if="items.length === 0" class="state">
       {{ t('products.empty') }} <RouterLink to="/products/new" class="link">{{ t('products.addFirst') }}</RouterLink>
     </div>
 
-    <div v-else class="card table-wrap rise" style="animation-delay: 0.1s">
-      <table class="ledger">
-        <thead>
-          <tr>
-            <th>{{ t('products.colProduct') }}</th>
-            <th>{{ t('products.colCategory') }}</th>
-            <th class="num">{{ t('products.colPrice') }}</th>
-            <th class="num">{{ t('products.colStock') }}</th>
-            <th class="act"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in filtered" :key="p.id">
-            <td :data-label="t('products.colProduct')" class="prod-cell">
-              <div class="prod">
-                <span class="prod__name">{{ p.name }}</span>
-                <span class="prod__sku mono">{{ p.sku }}</span>
-              </div>
-            </td>
-            <td :data-label="t('products.colCategory')"><span class="cat">{{ p.category }}</span></td>
-            <td :data-label="t('products.colPrice')" class="num mono price">{{ money(p.price) }}</td>
-            <td :data-label="t('products.colStock')" class="num"><StockTag :quantity="p.stock_quantity" /></td>
-            <td class="act" data-label="">
-              <div class="row-actions">
-                <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
-                <button
-                  class="btn btn--sm"
-                  :disabled="p.stock_quantity <= 0 || inCart(p.id) >= p.stock_quantity"
-                  @click="cart.add(p, 1)"
-                >
-                  {{ inCart(p.id) > 0 ? t('products.inOrder', { count: inCart(p.id) }) : t('products.add') }}
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <template v-else>
+      <div class="card table-wrap rise" style="animation-delay: 0.1s">
+        <table class="ledger">
+          <thead>
+            <tr>
+              <th>{{ t('products.colProduct') }}</th>
+              <th>{{ t('products.colCategory') }}</th>
+              <th class="num">{{ t('products.colPrice') }}</th>
+              <th class="num">{{ t('products.colStock') }}</th>
+              <th class="act"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in items" :key="p.id">
+              <td :data-label="t('products.colProduct')" class="prod-cell">
+                <div class="prod">
+                  <span class="prod__name">{{ p.name }}</span>
+                  <span class="prod__sku mono">{{ p.sku }}</span>
+                </div>
+              </td>
+              <td :data-label="t('products.colCategory')"><span class="cat">{{ p.category }}</span></td>
+              <td :data-label="t('products.colPrice')" class="num mono price">{{ money(p.price) }}</td>
+              <td :data-label="t('products.colStock')" class="num"><StockTag :quantity="p.stock_quantity" /></td>
+              <td class="act" data-label="">
+                <div class="row-actions">
+                  <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
+                  <button
+                    class="btn btn--sm"
+                    :disabled="p.stock_quantity <= 0 || inCart(p.id) >= p.stock_quantity"
+                    @click="cart.add(p, 1)"
+                  >
+                    {{ inCart(p.id) > 0 ? t('products.inOrder', { count: inCart(p.id) }) : t('products.add') }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager rise" style="animation-delay: 0.14s">
+        <span class="pager__info mono">{{ t('products.count', { total: meta.total }) }}</span>
+        <div class="pager__controls">
+          <button class="btn btn--sm btn--ghost" :disabled="meta.current_page <= 1" @click="goTo(meta.current_page - 1)">
+            {{ t('products.prev') }}
+          </button>
+          <span class="pager__page mono">{{ t('products.page', { page: meta.current_page, pages: meta.last_page }) }}</span>
+          <button class="btn btn--sm btn--ghost" :disabled="meta.current_page >= meta.last_page" @click="goTo(meta.current_page + 1)">
+            {{ t('products.next') }}
+          </button>
+        </div>
+      </div>
+    </template>
   </section>
 </template>
 
@@ -248,6 +279,32 @@ function inCart(productId: number): number {
   color: var(--accent);
 }
 
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.pager__info {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.pager__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pager__page {
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 92px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
   .head {
     align-items: stretch;
@@ -361,6 +418,11 @@ function inCart(productId: number): number {
     border: 1px solid var(--line-strong);
     border-radius: var(--radius);
     background: var(--paper);
+  }
+
+  .pager {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

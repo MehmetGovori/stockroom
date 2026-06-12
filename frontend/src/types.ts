@@ -39,6 +39,25 @@ export interface ProductInput {
   category: string
 }
 
+export interface PageMeta {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
+export interface ProductQuery {
+  search?: string
+  category?: string
+  page?: number
+  per_page?: number
+}
+
+export interface ProductPage {
+  items: Product[]
+  meta: PageMeta
+}
+
 export interface StockShortfall {
   product_id: number
   requested: number
