@@ -62,18 +62,7 @@ jobs:
         run: vendor/bin/pint --test
 
       - name: Run tests
-        run: |
-          set +e
-          OUTPUT=$(php artisan test 2>&1)
-          CODE=$?
-          echo "$OUTPUT"
-          if [ $CODE -ne 0 ]; then
-            ESCAPED="${OUTPUT//'%'/'%25'}"
-            ESCAPED="${ESCAPED//$'\n'/'%0A'}"
-            ESCAPED="${ESCAPED//$'\r'/'%0D'}"
-            echo "::error::$ESCAPED"
-          fi
-          exit $CODE
+        run: php artisan test
 
   frontend:
     name: Frontend (type-check + build)
