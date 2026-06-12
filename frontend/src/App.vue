@@ -12,7 +12,7 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const { count, total } = storeToRefs(cart)
-const { user } = storeToRefs(auth)
+const { user, isAuthenticated } = storeToRefs(auth)
 const { t } = useI18n()
 
 async function handleLogout() {
@@ -33,7 +33,7 @@ async function handleLogout() {
 
         <nav class="nav">
           <RouterLink to="/" class="nav__link">{{ t('nav.catalog') }}</RouterLink>
-          <RouterLink to="/orders" class="nav__link">{{ t('nav.orders') }}</RouterLink>
+          <RouterLink v-if="isAuthenticated" to="/orders" class="nav__link">{{ t('nav.orders') }}</RouterLink>
         </nav>
 
         <LanguageSwitcher />
@@ -45,8 +45,11 @@ async function handleLogout() {
         </RouterLink>
 
         <div class="account">
-          <span class="account__email mono" :title="user?.email">{{ user?.email }}</span>
-          <button class="btn btn--ghost btn--sm" @click="handleLogout">{{ t('auth.logout') }}</button>
+          <template v-if="isAuthenticated">
+            <span class="account__email mono" :title="user?.email">{{ user?.email }}</span>
+            <button class="btn btn--ghost btn--sm" @click="handleLogout">{{ t('auth.logout') }}</button>
+          </template>
+          <RouterLink v-else to="/login" class="btn btn--ghost btn--sm">{{ t('auth.signIn') }}</RouterLink>
         </div>
       </div>
     </header>

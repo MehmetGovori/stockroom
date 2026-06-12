@@ -37,7 +37,7 @@ php artisan serve            # http://127.0.0.1:8000
 Concerns are kept separate; nothing important lives in a controller.
 
 ```
-routes/api.php                route definitions (public login, token-guarded data routes)
+routes/api.php                route definitions (public catalog reads, token-guarded writes/orders)
 app/Http/Controllers          HTTP only — delegate to services / model queries
 app/Http/Controllers/Auth...  AuthController — login / logout / current user
 app/Http/Requests             FormRequest validation (Login, Store/Update product, Store order)
@@ -51,22 +51,23 @@ app/Models                    User, Product, Order, OrderItem + relationships an
 
 Token-based auth with **Laravel Sanctum**. `POST /login` checks credentials with
 `Hash::check` and returns a personal access token; protected routes use the `auth:sanctum`
-middleware and expect `Authorization: Bearer <token>`. Unauthenticated requests to `/api/*`
-return `401` JSON. The seeder creates a demo account: **`admin@stockroom.test` / `password`**.
+middleware and expect `Authorization: Bearer <token>`. Product reads are public so the
+catalog can be browsed without an account; managing products, placing orders, and viewing
+order history require a token. Unauthenticated requests to a protected route return `401`
+JSON. The seeder creates a demo account: **`admin@stockroom.test` / `password`**.
 
 ## API reference
 
-Base path `/api`. Responses are JSON wrapped in `data`. Every route except `POST /login`
-requires a bearer token.
+Base path `/api`. Responses are JSON wrapped in `data`.
 
 | Method   | Endpoint               | Auth  | Description                                                      |
 | -------- | ---------------------- | :---: | --------------------------------------------------------------- |
 | `POST`   | `/login`               |   -   | `{ email, password }` → `{ token, user }`                       |
 | `GET`    | `/user`                | token | The authenticated user                                          |
 | `POST`   | `/logout`              | token | Revoke the current token                                        |
-| `GET`    | `/products`            | token | Paginated list. Query: `search`, `category`, `page`, `per_page` |
-| `GET`    | `/products/categories` | token | Distinct category names (for filters)                           |
-| `GET`    | `/products/{id}`       | token | Single product                                                  |
+| `GET`    | `/products`            |   -   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` |   -   | Distinct category names (for filters)                           |
+| `GET`    | `/products/{id}`       |   -   | Single product                                                  |
 | `POST`   | `/products`            | token | Create a product                                                |
 | `PUT`    | `/products/{id}`       | token | Update a product                                                |
 | `DELETE` | `/products/{id}`       | token | Delete (409 if it belongs to an order)                          |

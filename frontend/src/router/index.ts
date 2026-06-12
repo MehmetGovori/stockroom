@@ -15,6 +15,7 @@ const router = createRouter({
       path: '/',
       name: 'products',
       component: () => import('../views/ProductsView.vue'),
+      meta: { public: true },
     },
     {
       path: '/products/new',

@@ -5,13 +5,16 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useProductStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
+import { useAuthStore } from '../stores/auth'
 import { money } from '../lib/format'
 import StockTag from '../components/StockTag.vue'
 
 const productStore = useProductStore()
 const cart = useCartStore()
+const auth = useAuthStore()
 const { t } = useI18n()
 const { items, meta, categories, loading, error } = storeToRefs(productStore)
+const { isAuthenticated } = storeToRefs(auth)
 
 const search = ref('')
 const category = ref('')
@@ -63,7 +66,7 @@ function inCart(productId: number): number {
         <h1 class="head__title">{{ t('products.title') }}</h1>
         <p class="head__sub">{{ t('products.subtitle') }}</p>
       </div>
-      <RouterLink to="/products/new" class="btn btn--accent">{{ t('products.newProduct') }}</RouterLink>
+      <RouterLink v-if="isAuthenticated" to="/products/new" class="btn btn--accent">{{ t('products.newProduct') }}</RouterLink>
     </header>
 
     <div class="filters rise" style="animation-delay: 0.05s">
@@ -107,7 +110,7 @@ function inCart(productId: number): number {
               <td :data-label="t('products.colStock')" class="num"><StockTag :quantity="p.stock_quantity" /></td>
               <td class="act" data-label="">
                 <div class="row-actions">
-                  <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
+                  <RouterLink v-if="isAuthenticated" :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
                   <button
                     class="btn btn--sm"
                     :disabled="p.stock_quantity <= 0 || inCart(p.id) >= p.stock_quantity"

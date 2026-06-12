@@ -42,14 +42,22 @@ class AuthTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
-    public function test_guests_cannot_access_protected_endpoints(): void
+    public function test_guests_can_browse_products_but_cannot_write_or_order(): void
     {
         $product = Product::factory()->create();
 
-        $this->getJson('/api/products')->assertUnauthorized();
+        $this->getJson('/api/products')->assertOk();
+        $this->getJson("/api/products/{$product->id}")->assertOk();
+
+        $this->postJson('/api/products', [
+            'name' => 'Locked', 'sku' => 'LCK-0001', 'price' => 10, 'stock_quantity' => 5, 'category' => 'Home',
+        ])->assertUnauthorized();
+
         $this->postJson('/api/orders', [
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
         ])->assertUnauthorized();
+
+        $this->getJson('/api/orders')->assertUnauthorized();
     }
 
     public function test_an_authenticated_user_can_read_their_profile_and_log_out(): void

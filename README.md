@@ -58,8 +58,9 @@ the seeded demo account below — no extra config needed.
 
 ## API
 
-Base path: `/api`. All responses are JSON wrapped in a `data` key. **Every endpoint except
-`POST /login` requires a bearer token** — see [Authentication](#authentication).
+Base path: `/api`. All responses are JSON wrapped in a `data` key. **Browsing the catalog is
+public; managing products, placing orders, and viewing order history require a bearer token**
+(marked 🔒) — see [Authentication](#authentication).
 
 ### Authentication
 
@@ -77,25 +78,25 @@ endpoint clears the SPA session and redirects to the login page.
 
 ### Products
 
-| Method   | Endpoint               | Description                                                      |
-| -------- | ---------------------- | --------------------------------------------------------------- |
-| `GET`    | `/products`            | Paginated list. Query: `search`, `category`, `page`, `per_page` |
-| `GET`    | `/products/categories` | Distinct category names (for the filter UI)                     |
-| `GET`    | `/products/{id}`       | Show a product                                                  |
-| `POST`   | `/products`            | Create a product                                                |
-| `PUT`    | `/products/{id}`       | Update a product                                                |
-| `DELETE` | `/products/{id}`       | Delete a product (blocked if it has orders)                     |
+| Method   | Endpoint               | Auth | Description                                                      |
+| -------- | ---------------------- | :--: | --------------------------------------------------------------- |
+| `GET`    | `/products`            |  —   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` |  —   | Distinct category names (for the filter UI)                     |
+| `GET`    | `/products/{id}`       |  —   | Show a product                                                  |
+| `POST`   | `/products`            | 🔒   | Create a product                                                |
+| `PUT`    | `/products/{id}`       | 🔒   | Update a product                                                |
+| `DELETE` | `/products/{id}`       | 🔒   | Delete a product (blocked if it has orders)                     |
 
 Paginated responses include Laravel's `links` and `meta` (`current_page`, `last_page`,
 `per_page`, `total`).
 
 ### Orders
 
-| Method | Endpoint        | Description                                        |
-| ------ | --------------- | ------------------------------------------------- |
-| `GET`  | `/orders`       | List orders with line items and totals            |
-| `GET`  | `/orders/{id}`  | Show an order                                     |
-| `POST` | `/orders`       | Place an order, validating and decrementing stock |
+| Method | Endpoint        | Auth | Description                                        |
+| ------ | --------------- | :--: | ------------------------------------------------- |
+| `GET`  | `/orders`       | 🔒   | List orders with line items and totals            |
+| `GET`  | `/orders/{id}`  | 🔒   | Show an order                                     |
+| `POST` | `/orders`       | 🔒   | Place an order, validating and decrementing stock |
 
 **Place an order**
 
