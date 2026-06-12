@@ -104,6 +104,7 @@ button {
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 0.005em;
+  white-space: nowrap;
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }

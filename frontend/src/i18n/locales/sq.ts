@@ -8,6 +8,18 @@ export default {
   language: {
     label: 'Gjuha',
   },
+  auth: {
+    eyebrow: 'Mirë se erdhe',
+    title: 'Hyr',
+    subtitle: 'Hyr për të menaxhuar inventarin dhe për të bërë porosi.',
+    email: 'Email',
+    password: 'Fjalëkalimi',
+    signIn: 'Hyr',
+    signingIn: 'Duke hyrë…',
+    invalid: 'Nuk u arrit hyrja. Kontrollo të dhënat dhe provo përsëri.',
+    logout: 'Dil',
+    demoHint: 'Llogari demo',
+  },
   status: {
     confirmed: 'konfirmuar',
   },

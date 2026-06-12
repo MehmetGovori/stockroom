@@ -8,6 +8,18 @@ export default {
   language: {
     label: 'Language',
   },
+  auth: {
+    eyebrow: 'Welcome back',
+    title: 'Sign in',
+    subtitle: 'Sign in to manage inventory and place orders.',
+    email: 'Email',
+    password: 'Password',
+    signIn: 'Sign in',
+    signingIn: 'Signing in…',
+    invalid: 'Unable to sign in. Check your details and try again.',
+    logout: 'Sign out',
+    demoHint: 'Demo account',
+  },
   status: {
     confirmed: 'confirmed',
   },

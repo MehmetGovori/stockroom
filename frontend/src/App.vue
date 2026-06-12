@@ -1,19 +1,29 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCartStore } from './stores/cart'
+import { useAuthStore } from './stores/auth'
 import { money } from './lib/format'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
 import { useI18n } from 'vue-i18n'
 
 const cart = useCartStore()
+const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 const { count, total } = storeToRefs(cart)
+const { user } = storeToRefs(auth)
 const { t } = useI18n()
+
+async function handleLogout() {
+  await auth.logout()
+  router.push({ name: 'login' })
+}
 </script>
 
 <template>
   <div class="app">
-    <header class="topbar">
+    <header v-if="route.name !== 'login'" class="topbar">
       <div class="shell topbar__inner">
         <RouterLink to="/" class="brand">
           <span class="brand__mark" aria-hidden="true"></span>
@@ -33,16 +43,21 @@ const { t } = useI18n()
           <span class="order-pill__count mono">{{ count }}</span>
           <span class="order-pill__total mono">{{ money(total) }}</span>
         </RouterLink>
+
+        <div class="account">
+          <span class="account__email mono" :title="user?.email">{{ user?.email }}</span>
+          <button class="btn btn--ghost btn--sm" @click="handleLogout">{{ t('auth.logout') }}</button>
+        </div>
       </div>
     </header>
 
-    <main class="shell main">
+    <main class="shell main" :class="{ 'main--bare': route.name === 'login' }">
       <RouterView v-slot="{ Component }">
         <component :is="Component" />
       </RouterView>
     </main>
 
-    <footer class="shell foot">
+    <footer v-if="route.name !== 'login'" class="shell foot">
       <span class="mono">{{ t('nav.footer') }}</span>
     </footer>
   </div>
@@ -172,6 +187,21 @@ const { t } = useI18n()
   font-weight: 700;
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account__email {
+  font-size: 12px;
+  color: var(--ink-faint);
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .main {
   flex: 1;
   width: 100%;
@@ -179,11 +209,25 @@ const { t } = useI18n()
   padding-bottom: 72px;
 }
 
+.main--bare {
+  padding: 0;
+}
+
 .foot {
   padding: 26px 28px 40px;
   border-top: 1px solid var(--line);
   color: var(--ink-faint);
   font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+  .brand__tag {
+    display: none;
+  }
+
+  .account__email {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -240,6 +284,10 @@ const { t } = useI18n()
   }
 
   .order-pill__total {
+    display: none;
+  }
+
+  .account__email {
     display: none;
   }
 
