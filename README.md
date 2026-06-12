@@ -1,10 +1,12 @@
 # Stockroom — Product Inventory & Order Management
 
+[![CI](https://github.com/MehmetGovori/stockroom/actions/workflows/ci.yml/badge.svg)](https://github.com/MehmetGovori/stockroom/actions/workflows/ci.yml)
+
 A deliberately scoped slice of an e-commerce backend: manage products and place orders
 against live stock, with overselling prevented under concurrent requests.
 
 - **Backend:** Laravel 13 (PHP 8.3) REST API
-- **Frontend:** Vue 3 + TypeScript + Vite (Pinia, Vue Router, Axios)
+- **Frontend:** Vue 3 + TypeScript + Vite (Pinia, Vue Router, Axios, vue-i18n)
 - **Database:** MySQL 8
 - **Runtime:** `docker compose up` from a clean checkout
 
@@ -225,6 +227,26 @@ order/stock logic that matters most:
 
 ---
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`:
+
+- **Backend** — installs Composer deps, lints with **Laravel Pint**, and runs the
+  PHPUnit suite (SQLite, no external services needed).
+- **Frontend** — installs npm deps and runs `npm run build`, which type-checks with
+  `vue-tsc` before bundling.
+
+---
+
+## Internationalization
+
+The SPA ships English and Albanian via `vue-i18n`, with an EN/AL switcher in the navbar.
+The choice persists to `localStorage` and sets the document language. API-returned
+messages stay in English; localizing those would mean sending `Accept-Language` and adding
+Laravel translation files.
+
+---
+
 ## What I'd do with more time
 
 - **A true concurrency test** spinning up parallel processes against MySQL to assert the
@@ -235,6 +257,6 @@ order/stock logic that matters most:
   is fine for the exercise scope but not for production.
 - **Domain events** (`OrderPlaced`) to decouple side effects like emails or low-stock
   alerts from the order transaction.
-- **CI** (lint + test on push) and a production PHP-FPM + nginx image instead of
-  `artisan serve`.
+- **A production PHP-FPM + nginx image** instead of `artisan serve`, and CI extended to
+  run the suite against a real MySQL service.
 - **Optimistic-lock fallback** for high-contention catalogs, chosen per-product.
