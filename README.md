@@ -51,45 +51,51 @@ npm install
 npm run dev                  # http://localhost:5173
 ```
 
-The frontend reads `VITE_API_URL` (defaults to `http://localhost:8000/api`) and
-`VITE_API_KEY` (the value of the backend's `API_KEY`, sent on write requests). For local
-dev, add them to `frontend/.env`; the Docker build passes them as build args.
+The frontend reads `VITE_API_URL` (defaults to `http://localhost:8000/api`). Sign in with
+the seeded demo account below — no extra config needed.
 
 ---
 
 ## API
 
-Base path: `/api`. All responses are JSON wrapped in a `data` key. Write endpoints
-(marked 🔑) require an `X-API-Key` header — see [Authentication](#authentication).
+Base path: `/api`. All responses are JSON wrapped in a `data` key. **Every endpoint except
+`POST /login` requires a bearer token** — see [Authentication](#authentication).
+
+### Authentication
+
+Token-based auth with **Laravel Sanctum**. Sign in to receive a personal access token; the
+SPA stores it and sends it as `Authorization: Bearer <token>`.
+
+| Method | Endpoint   | Description                                  |
+| ------ | ---------- | -------------------------------------------- |
+| `POST` | `/login`   | `{ email, password }` → `{ token, user }`    |
+| `GET`  | `/user`    | The authenticated user                       |
+| `POST` | `/logout`  | Revoke the current token                     |
+
+Seeded demo account: **`admin@stockroom.test`** / **`password`**. A `401` from any protected
+endpoint clears the SPA session and redirects to the login page.
 
 ### Products
 
-| Method   | Endpoint               | Auth | Description                                                      |
-| -------- | ---------------------- | :--: | ---------------------------------------------------------------- |
-| `GET`    | `/products`            |  —   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
-| `GET`    | `/products/categories` |  —   | Distinct category names (for the filter UI)                     |
-| `GET`    | `/products/{id}`       |  —   | Show a product                                                  |
-| `POST`   | `/products`            | 🔑   | Create a product                                                |
-| `PUT`    | `/products/{id}`       | 🔑   | Update a product                                                |
-| `DELETE` | `/products/{id}`       | 🔑   | Delete a product (blocked if it has orders)                     |
+| Method   | Endpoint               | Description                                                      |
+| -------- | ---------------------- | --------------------------------------------------------------- |
+| `GET`    | `/products`            | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` | Distinct category names (for the filter UI)                     |
+| `GET`    | `/products/{id}`       | Show a product                                                  |
+| `POST`   | `/products`            | Create a product                                                |
+| `PUT`    | `/products/{id}`       | Update a product                                                |
+| `DELETE` | `/products/{id}`       | Delete a product (blocked if it has orders)                     |
 
 Paginated responses include Laravel's `links` and `meta` (`current_page`, `last_page`,
 `per_page`, `total`).
 
 ### Orders
 
-| Method | Endpoint        | Auth | Description                                        |
-| ------ | --------------- | :--: | ------------------------------------------------- |
-| `GET`  | `/orders`       |  —   | List orders with line items and totals            |
-| `GET`  | `/orders/{id}`  |  —   | Show an order                                     |
-| `POST` | `/orders`       | 🔑   | Place an order, validating and decrementing stock |
-
-### Authentication
-
-Reads are public; writes require a shared secret sent as `X-API-Key`, compared with
-`hash_equals` against the `API_KEY` env var. A missing or wrong key returns `401`. This is
-the lightest credible guard for an internal operator tool; a JWT/session layer would be the
-next step for real multi-user auth.
+| Method | Endpoint        | Description                                        |
+| ------ | --------------- | ------------------------------------------------- |
+| `GET`  | `/orders`       | List orders with line items and totals            |
+| `GET`  | `/orders/{id}`  | Show an order                                     |
+| `POST` | `/orders`       | Place an order, validating and decrementing stock |
 
 **Place an order**
 
@@ -111,6 +117,7 @@ Content-Type: application/json
 | ----- | ----------------------------------------------------------------- |
 | `201` | Resource created                                                  |
 | `204` | Deleted                                                           |
+| `401` | Missing/invalid bearer token                                      |
 | `409` | Insufficient stock (see shape below)                              |
 | `422` | Validation error (`{ "message", "errors": { field: [...] } }`)    |
 
@@ -262,7 +269,7 @@ first and kept solid; the stretch goals were then layered on without disturbing 
 
 - **Multi-stage Docker + compose** — `docker compose up` from a clean checkout.
 - **CI workflow** — lint + tests on every push (backend runs against a MySQL service).
-- **API-key auth** — the `X-API-Key` guard on all write endpoints.
+- **Token auth (Sanctum)** — a login page and a bearer-token guard on the API.
 - **Pagination + filtering** — server-side `page`/`per_page` with `search`/`category`.
 
 ---
@@ -282,7 +289,7 @@ Laravel translation files.
   lock empirically, rather than relying on sequential logic tests.
 - **Cursor pagination** for the product list instead of offset pages, for stable paging
   under concurrent inserts.
-- **Real multi-user auth** (JWT/Sanctum with roles) in place of the single shared API key.
+- **Roles and permissions** on top of the current Sanctum auth, plus token refresh/expiry.
 - **Domain events** (`OrderPlaced`) to decouple side effects like emails or low-stock
   alerts from the order transaction.
 - **A production PHP-FPM + nginx image** instead of `artisan serve`.

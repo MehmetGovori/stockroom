@@ -29,7 +29,6 @@ php artisan serve            # http://127.0.0.1:8000
 | Variable               | Purpose                                                        |
 | ---------------------- | -------------------------------------------------------------- |
 | `DB_*`                 | MySQL connection                                               |
-| `API_KEY`              | Secret required in the `X-API-Key` header on write endpoints   |
 | `PRODUCTS_PER_PAGE`    | Default product page size (overridable per request, max 50)    |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed to call the API (the SPA)      |
 
@@ -38,42 +37,42 @@ php artisan serve            # http://127.0.0.1:8000
 Concerns are kept separate; nothing important lives in a controller.
 
 ```
-routes/api.php                route definitions (public reads, key-guarded writes)
+routes/api.php                route definitions (public login, token-guarded data routes)
 app/Http/Controllers          HTTP only — delegate to services / model queries
-app/Http/Requests             FormRequest validation (Store/Update product, Store order)
+app/Http/Controllers/Auth...  AuthController — login / logout / current user
+app/Http/Requests             FormRequest validation (Login, Store/Update product, Store order)
 app/Http/Resources            response serialization (consistent { data: ... } shape)
-app/Http/Middleware           EnsureApiKey — protects write endpoints
 app/Services/OrderService     the order/stock transaction (validate -> lock -> decrement)
 app/Exceptions                InsufficientStockException (renders 409 with shortfalls)
-app/Models                    Product, Order, OrderItem + relationships and casts
+app/Models                    User, Product, Order, OrderItem + relationships and casts
 ```
 
 ## Authentication
 
-Read endpoints are public. **Write endpoints require an API key** sent as a header:
-
-```
-X-API-Key: <your API_KEY>
-```
-
-Missing or wrong keys return `401`. An API key is the lightest credible guard for an
-internal operator tool; a JWT/session layer would be the next step for multi-user auth.
+Token-based auth with **Laravel Sanctum**. `POST /login` checks credentials with
+`Hash::check` and returns a personal access token; protected routes use the `auth:sanctum`
+middleware and expect `Authorization: Bearer <token>`. Unauthenticated requests to `/api/*`
+return `401` JSON. The seeder creates a demo account: **`admin@stockroom.test` / `password`**.
 
 ## API reference
 
-Base path `/api`. Responses are JSON wrapped in `data`.
+Base path `/api`. Responses are JSON wrapped in `data`. Every route except `POST /login`
+requires a bearer token.
 
-| Method   | Endpoint               | Auth | Description                                                      |
-| -------- | ---------------------- | :--: | ---------------------------------------------------------------- |
-| `GET`    | `/products`            |  -   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
-| `GET`    | `/products/categories` |  -   | Distinct category names (for filters)                           |
-| `GET`    | `/products/{id}`       |  -   | Single product                                                  |
-| `POST`   | `/products`            | key  | Create a product                                                |
-| `PUT`    | `/products/{id}`       | key  | Update a product                                                |
-| `DELETE` | `/products/{id}`       | key  | Delete (409 if it belongs to an order)                          |
-| `GET`    | `/orders`              |  -   | Orders with line items and totals                               |
-| `GET`    | `/orders/{id}`         |  -   | Single order                                                    |
-| `POST`   | `/orders`              | key  | Place an order (validates + decrements stock)                   |
+| Method   | Endpoint               | Auth  | Description                                                      |
+| -------- | ---------------------- | :---: | --------------------------------------------------------------- |
+| `POST`   | `/login`               |   -   | `{ email, password }` → `{ token, user }`                       |
+| `GET`    | `/user`                | token | The authenticated user                                          |
+| `POST`   | `/logout`              | token | Revoke the current token                                        |
+| `GET`    | `/products`            | token | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` | token | Distinct category names (for filters)                           |
+| `GET`    | `/products/{id}`       | token | Single product                                                  |
+| `POST`   | `/products`            | token | Create a product                                                |
+| `PUT`    | `/products/{id}`       | token | Update a product                                                |
+| `DELETE` | `/products/{id}`       | token | Delete (409 if it belongs to an order)                          |
+| `GET`    | `/orders`              | token | Orders with line items and totals                               |
+| `GET`    | `/orders/{id}`         | token | Single order                                                    |
+| `POST`   | `/orders`              | token | Place an order (validates + decrements stock)                   |
 
 Paginated list responses include Laravel's `links` and `meta` (`current_page`,
 `last_page`, `per_page`, `total`).
@@ -81,13 +80,15 @@ Paginated list responses include Laravel's `links` and `meta` (`current_page`,
 ### Example
 
 ```bash
-# public read
-curl "http://127.0.0.1:8000/api/products?per_page=8&category=Kitchen"
+# sign in and capture the token
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@stockroom.test","password":"password"}' | jq -r .data.token)
 
-# guarded write
+# call a protected endpoint
 curl -X POST http://127.0.0.1:8000/api/orders \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: local-development-key" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"items":[{"product_id":1,"quantity":2}]}'
 ```
 
@@ -97,7 +98,7 @@ curl -X POST http://127.0.0.1:8000/api/orders \
 | ----- | ------------------------------------------------------------ |
 | `201` | Created                                                      |
 | `204` | Deleted                                                      |
-| `401` | Missing/invalid API key                                     |
+| `401` | Missing/invalid bearer token                                |
 | `409` | Insufficient stock - `{ message, errors: { items: [...] } }` |
 | `422` | Validation error - `{ message, errors: { field: [...] } }`  |
 
@@ -114,7 +115,7 @@ can never both succeed.
 php artisan test
 ```
 
-Feature tests cover product CRUD, filtering, pagination, the API-key guard, and the full
+Feature tests cover login/logout, the auth guard, product CRUD, filtering, pagination, and the full
 order/stock path (decrement, totals, insufficient-stock `409`, last-unit contention,
 duplicate-line merging). A unit test covers the insufficient-stock exception contract.
 
