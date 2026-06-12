@@ -1,58 +1,122 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Stockroom API (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+REST API for the Product Inventory & Order Management service. Handles product CRUD and
+order placement with atomic, race-safe stock control.
 
-## About Laravel
+> Project-wide setup, the database-choice rationale, and the concurrency write-up live in
+> the [root README](../README.md). This file is the day-to-day reference for working in the
+> backend.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.3+
+- Composer 2
+- MySQL 8 (SQLite is used only for the test suite)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env
+composer install
+php artisan key:generate
+# create the `stockroom` database, then:
+php artisan migrate --seed
+php artisan serve            # http://127.0.0.1:8000
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Configuration
 
-## Contributing
+| Variable               | Purpose                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| `DB_*`                 | MySQL connection                                               |
+| `API_KEY`              | Secret required in the `X-API-Key` header on write endpoints   |
+| `PRODUCTS_PER_PAGE`    | Default product page size (overridable per request, max 50)    |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed to call the API (the SPA)      |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Architecture
 
-## Code of Conduct
+Concerns are kept separate; nothing important lives in a controller.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
+routes/api.php                route definitions (public reads, key-guarded writes)
+app/Http/Controllers          HTTP only — delegate to services / model queries
+app/Http/Requests             FormRequest validation (Store/Update product, Store order)
+app/Http/Resources            response serialization (consistent { data: ... } shape)
+app/Http/Middleware           EnsureApiKey — protects write endpoints
+app/Services/OrderService     the order/stock transaction (validate -> lock -> decrement)
+app/Exceptions                InsufficientStockException (renders 409 with shortfalls)
+app/Models                    Product, Order, OrderItem + relationships and casts
+```
 
-## Security Vulnerabilities
+## Authentication
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Read endpoints are public. **Write endpoints require an API key** sent as a header:
 
-## License
+```
+X-API-Key: <your API_KEY>
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Missing or wrong keys return `401`. An API key is the lightest credible guard for an
+internal operator tool; a JWT/session layer would be the next step for multi-user auth.
+
+## API reference
+
+Base path `/api`. Responses are JSON wrapped in `data`.
+
+| Method   | Endpoint               | Auth | Description                                                      |
+| -------- | ---------------------- | :--: | ---------------------------------------------------------------- |
+| `GET`    | `/products`            |  -   | Paginated list. Query: `search`, `category`, `page`, `per_page` |
+| `GET`    | `/products/categories` |  -   | Distinct category names (for filters)                           |
+| `GET`    | `/products/{id}`       |  -   | Single product                                                  |
+| `POST`   | `/products`            | key  | Create a product                                                |
+| `PUT`    | `/products/{id}`       | key  | Update a product                                                |
+| `DELETE` | `/products/{id}`       | key  | Delete (409 if it belongs to an order)                          |
+| `GET`    | `/orders`              |  -   | Orders with line items and totals                               |
+| `GET`    | `/orders/{id}`         |  -   | Single order                                                    |
+| `POST`   | `/orders`              | key  | Place an order (validates + decrements stock)                   |
+
+Paginated list responses include Laravel's `links` and `meta` (`current_page`,
+`last_page`, `per_page`, `total`).
+
+### Example
+
+```bash
+# public read
+curl "http://127.0.0.1:8000/api/products?per_page=8&category=Kitchen"
+
+# guarded write
+curl -X POST http://127.0.0.1:8000/api/orders \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: local-development-key" \
+  -d '{"items":[{"product_id":1,"quantity":2}]}'
+```
+
+### Status codes
+
+| Code  | Meaning                                                      |
+| ----- | ------------------------------------------------------------ |
+| `201` | Created                                                      |
+| `204` | Deleted                                                      |
+| `401` | Missing/invalid API key                                     |
+| `409` | Insufficient stock - `{ message, errors: { items: [...] } }` |
+| `422` | Validation error - `{ message, errors: { field: [...] } }`  |
+
+## Concurrency
+
+`OrderService::place()` runs inside `DB::transaction()` and selects the ordered products
+with `lockForUpdate()` (`SELECT ... FOR UPDATE`, ordered by id to avoid deadlocks). Stock is
+validated under the lock and decremented before commit, so two orders for the last unit
+can never both succeed.
+
+## Tests
+
+```bash
+php artisan test
+```
+
+Feature tests cover product CRUD, filtering, pagination, the API-key guard, and the full
+order/stock path (decrement, totals, insufficient-stock `409`, last-unit contention,
+duplicate-line merging). A unit test covers the insufficient-stock exception contract.
+
+The suite runs on in-memory SQLite by default; CI runs it against MySQL so the row lock is
+exercised on the real engine.
