@@ -1,0 +1,11 @@
+# Old assessment husks (locked empty dirs, not part of this project)
+/test_project_backend/
+/test_project_frontend/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+/.claude/
