@@ -2,15 +2,17 @@
 
 namespace Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Laravel\Sanctum\Sanctum;
 
 abstract class TestCase extends BaseTestCase
 {
-    /**
-     * @return array<string, string>
-     */
-    protected function apiKeyHeaders(): array
+    protected function authenticate(?User $user = null): User
     {
-        return ['X-API-Key' => (string) config('stockroom.api_key')];
+        $user ??= User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
     }
 }
