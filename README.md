@@ -196,6 +196,10 @@ A second concurrent request for the same product **blocks** on the lock until th
 commits, then re-reads the now-decremented stock and is correctly rejected. This makes
 the check-then-decrement sequence atomic, so the last unit can only be sold once.
 
+The checkout UI treats that `409` as a recoverable race: it lists the affected line
+items, refreshes the catalog, and caps or removes stale cart quantities so the user can
+resubmit against current stock.
+
 **Alternative considered:** optimistic concurrency with a `version` column and a
 compare-and-set on decrement. It avoids holding locks and scales better under high
 contention, but needs client retry handling. For a small shop with low write contention,
@@ -235,6 +239,15 @@ order/stock logic that matters most:
   PHPUnit suite (SQLite, no external services needed).
 - **Frontend** — installs npm deps and runs `npm run build`, which type-checks with
   `vue-tsc` before bundling.
+
+---
+
+## Stretch goal coverage
+
+The exercise asks candidates to pick at most one optional stretch goal. This submission
+implements clean Dockerization and also includes a small CI workflow. Product filtering is
+included; pagination and write-endpoint auth are intentionally left out so the core stock
+and order flow stays focused.
 
 ---
 

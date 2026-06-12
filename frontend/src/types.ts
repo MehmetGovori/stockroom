@@ -39,7 +39,13 @@ export interface ProductInput {
   category: string
 }
 
+export interface StockShortfall {
+  product_id: number
+  requested: number
+  available: number
+}
+
 export interface ApiError {
   message: string
-  errors?: Record<string, string[]>
+  errors?: Record<string, string[] | StockShortfall[]>
 }

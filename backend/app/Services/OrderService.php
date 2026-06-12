@@ -20,6 +20,7 @@ class OrderService
         return DB::transaction(function () use ($quantities) {
             $products = Product::query()
                 ->whereIn('id', array_keys($quantities))
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');

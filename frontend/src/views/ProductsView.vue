@@ -79,16 +79,16 @@ function inCart(productId: number): number {
         </thead>
         <tbody>
           <tr v-for="p in filtered" :key="p.id">
-            <td>
+            <td :data-label="t('products.colProduct')" class="prod-cell">
               <div class="prod">
                 <span class="prod__name">{{ p.name }}</span>
                 <span class="prod__sku mono">{{ p.sku }}</span>
               </div>
             </td>
-            <td><span class="cat">{{ p.category }}</span></td>
-            <td class="num mono price">{{ money(p.price) }}</td>
-            <td class="num"><StockTag :quantity="p.stock_quantity" /></td>
-            <td class="act">
+            <td :data-label="t('products.colCategory')"><span class="cat">{{ p.category }}</span></td>
+            <td :data-label="t('products.colPrice')" class="num mono price">{{ money(p.price) }}</td>
+            <td :data-label="t('products.colStock')" class="num"><StockTag :quantity="p.stock_quantity" /></td>
+            <td class="act" data-label="">
               <div class="row-actions">
                 <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
                 <button
@@ -249,33 +249,118 @@ function inCart(productId: number): number {
 }
 
 @media (max-width: 720px) {
+  .head {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .head .btn {
+    width: 100%;
+  }
+
   .filters {
     grid-template-columns: 1fr;
+    margin-bottom: 16px;
   }
+
   .head__title {
     font-size: 32px;
   }
+
   .ledger thead {
     display: none;
   }
+
+  .table-wrap {
+    overflow: visible;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .ledger,
-  .ledger tbody,
-  .ledger tr,
-  .ledger td {
+  .ledger tbody {
     display: block;
     width: 100%;
   }
-  .ledger tbody td {
-    border: none;
-    padding: 4px 16px;
+
+  .ledger tbody {
+    display: grid;
+    gap: 12px;
   }
+
   .ledger tbody tr {
-    border-bottom: 1px solid var(--line);
-    padding: 12px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-card);
   }
+
+  .ledger tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+  }
+
+  .ledger tbody td::before {
+    content: attr(data-label);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .ledger tbody .prod-cell {
+    grid-column: 1 / -1;
+    display: block;
+  }
+
+  .ledger tbody .prod-cell::before,
+  .ledger tbody .act::before {
+    display: none;
+  }
+
   .num,
   .act {
     text-align: left;
+  }
+
+  .act {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+  }
+
+  .row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .row-actions .btn,
+  .icon-link {
+    justify-content: center;
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .icon-link {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--paper);
   }
 }
 </style>

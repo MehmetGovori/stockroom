@@ -49,6 +49,10 @@ export default {
     placing: 'Duke vendosur…',
     keepShopping: 'Vazhdo blerjen',
     error: 'Porosia nuk u krye. Ju lutemi provoni përsëri.',
+    productFallback: 'Produkti #{id}',
+    availableShortfall: 'Kërkuar {requested}; {available} në stok',
+    unavailableShortfall: 'Kërkuar {requested}; tani pa stok',
+    cartAdjusted: 'Shporta u rifreskua me stokun më të fundit.',
   },
   confirmation: {
     loading: 'Duke ngarkuar porosinë…',

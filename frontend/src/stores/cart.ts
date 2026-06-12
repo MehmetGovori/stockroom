@@ -51,9 +51,27 @@ export const useCartStore = defineStore('cart', () => {
     lines.value = []
   }
 
+  function syncAvailability(products: Product[]): boolean {
+    const byId = new Map(products.map((product) => [product.id, product]))
+    let adjusted = false
+
+    lines.value = lines.value.flatMap((line) => {
+      const product = byId.get(line.product.id) ?? line.product
+      const quantity = Math.min(line.quantity, product.stock_quantity)
+
+      if (quantity !== line.quantity) {
+        adjusted = true
+      }
+
+      return quantity > 0 ? [{ product, quantity }] : []
+    })
+
+    return adjusted
+  }
+
   function payload() {
     return lines.value.map((line) => ({ product_id: line.product.id, quantity: line.quantity }))
   }
 
-  return { lines, isEmpty, count, total, lineFor, add, setQuantity, remove, clear, payload }
+  return { lines, isEmpty, count, total, lineFor, add, setQuantity, remove, clear, syncAvailability, payload }
 })

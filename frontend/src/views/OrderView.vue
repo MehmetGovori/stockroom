@@ -171,8 +171,46 @@ onMounted(async () => {
 }
 
 @media (max-width: 520px) {
+  .confirm__id {
+    font-size: 28px;
+  }
+
+  .receipt {
+    padding: 18px;
+  }
+
+  .items tr {
+    display: grid;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .items tr:last-child {
+    border-bottom: none;
+  }
+
+  .items td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .qty,
+  .line {
+    padding-right: 0;
+    text-align: left;
+  }
+
+  .receipt__total {
+    font-size: 22px;
+  }
+
   .actions {
     flex-direction: column;
+  }
+
+  .actions .btn {
+    width: 100%;
   }
 }
 </style>

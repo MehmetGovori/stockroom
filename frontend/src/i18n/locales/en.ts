@@ -49,6 +49,10 @@ export default {
     placing: 'Placing…',
     keepShopping: 'Keep shopping',
     error: 'Could not place the order. Please try again.',
+    productFallback: 'Product #{id}',
+    availableShortfall: 'Requested {requested}; {available} available',
+    unavailableShortfall: 'Requested {requested}; now unavailable',
+    cartAdjusted: 'The cart was refreshed to the latest stock.',
   },
   confirmation: {
     loading: 'Loading order…',

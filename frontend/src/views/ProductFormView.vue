@@ -53,7 +53,8 @@ async function save() {
     router.push('/')
   } catch (err) {
     const axiosError = err as AxiosError<ApiError>
-    errors.value = axiosError.response?.data?.errors ?? {}
+    const apiErrors = axiosError.response?.data?.errors
+    errors.value = (apiErrors as Record<string, string[]> | undefined) ?? {}
     errorMessage.value = axiosError.response?.data?.message ?? t('productForm.saveError')
   } finally {
     saving.value = false
@@ -176,8 +177,24 @@ async function save() {
 }
 
 @media (max-width: 520px) {
+  .head h1 {
+    font-size: 30px;
+  }
+
+  .form {
+    padding: 20px;
+  }
+
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions .btn {
+    width: 100%;
   }
 }
 </style>

@@ -136,4 +136,39 @@ function summarize(order: Order): string {
   font-size: 22px;
   white-space: nowrap;
 }
+
+@media (max-width: 640px) {
+  .head {
+    margin-bottom: 20px;
+  }
+
+  .head h1 {
+    font-size: 32px;
+  }
+
+  .order {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .order__main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .order__top {
+    justify-content: space-between;
+  }
+
+  .order__items {
+    overflow-wrap: anywhere;
+  }
+
+  .order__total {
+    align-self: flex-end;
+    font-size: 20px;
+  }
+}
 </style>
