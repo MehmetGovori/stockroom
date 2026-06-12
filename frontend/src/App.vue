@@ -17,7 +17,7 @@ const { t } = useI18n()
       <div class="shell topbar__inner">
         <RouterLink to="/" class="brand">
           <span class="brand__mark" aria-hidden="true"></span>
-          <span class="brand__name caret">stockroom</span>
+          <span class="brand__name">Stockroom</span>
           <span class="brand__tag mono">INV/ORD</span>
         </RouterLink>
 
@@ -59,9 +59,9 @@ const { t } = useI18n()
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(8, 11, 9, 0.88);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--line-strong);
+  background: rgba(245, 246, 248, 0.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
 }
 
 .topbar__inner {
@@ -78,28 +78,27 @@ const { t } = useI18n()
 }
 
 .brand__mark {
-  width: 11px;
-  height: 16px;
-  border-radius: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   background: var(--accent);
-  box-shadow: var(--glow-amber);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
 .brand__name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.02em;
-  text-shadow: var(--glow);
+  font-size: 20px;
+  letter-spacing: -0.035em;
 }
 
 .brand__tag {
   font-size: 10px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   color: var(--ink-faint);
   border: 1px solid var(--line-strong);
-  border-radius: 2px;
-  padding: 2px 8px;
+  border-radius: 100px;
+  padding: 2px 9px;
 }
 
 .nav {
@@ -141,7 +140,7 @@ const { t } = useI18n()
 
 .order-pill--live {
   border-color: var(--accent);
-  box-shadow: var(--glow-amber);
+  box-shadow: 0 0 0 4px rgba(12, 155, 98, 0.13);
 }
 
 .order-pill__label {
