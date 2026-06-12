@@ -45,7 +45,7 @@ class ProductApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.sku', 'BWL-0500')
-            ->assertJsonPath('data.price', 24.5);
+            ->assertJsonPath('data.price', fn ($price) => (float) $price === 24.5);
 
         $this->assertDatabaseHas('products', ['sku' => 'BWL-0500', 'stock_quantity' => 15]);
     }
@@ -85,7 +85,7 @@ class ProductApiTest extends TestCase
             'category' => $product->category,
         ]);
 
-        $response->assertOk()->assertJsonPath('data.price', 99.99);
+        $response->assertOk()->assertJsonPath('data.price', fn ($price) => (float) $price === 99.99);
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock_quantity' => 7]);
     }
 

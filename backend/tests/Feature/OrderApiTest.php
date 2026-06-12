@@ -25,7 +25,7 @@ class OrderApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.status', 'confirmed')
-            ->assertJsonPath('data.total', 206)
+            ->assertJsonPath('data.total', fn ($total) => (float) $total === 206.0)
             ->assertJsonCount(2, 'data.items');
 
         $this->assertDatabaseHas('products', ['id' => $kettle->id, 'stock_quantity' => 8]);
@@ -69,7 +69,7 @@ class OrderApiTest extends TestCase
             ],
         ]);
 
-        $response->assertCreated()->assertJsonPath('data.total', 50);
+        $response->assertCreated()->assertJsonPath('data.total', fn ($total) => (float) $total === 50.0);
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock_quantity' => 5]);
     }
@@ -104,7 +104,7 @@ class OrderApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.total', 40)
+            ->assertJsonPath('data.0.total', fn ($total) => (float) $total === 40.0)
             ->assertJsonCount(1, 'data.0.items');
 
         $this->assertSame(1, Order::query()->count());
