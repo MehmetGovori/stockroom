@@ -17,7 +17,7 @@ const { t } = useI18n()
       <div class="shell topbar__inner">
         <RouterLink to="/" class="brand">
           <span class="brand__mark" aria-hidden="true"></span>
-          <span class="brand__name">Stockroom</span>
+          <span class="brand__name caret">stockroom</span>
           <span class="brand__tag mono">INV/ORD</span>
         </RouterLink>
 
@@ -59,7 +59,7 @@ const { t } = useI18n()
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(245, 241, 232, 0.86);
+  background: rgba(8, 11, 9, 0.88);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line-strong);
 }
@@ -78,18 +78,19 @@ const { t } = useI18n()
 }
 
 .brand__mark {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 11px;
+  height: 16px;
+  border-radius: 1px;
   background: var(--accent);
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: var(--glow-amber);
 }
 
 .brand__name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 20px;
-  letter-spacing: -0.03em;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  text-shadow: var(--glow);
 }
 
 .brand__tag {
@@ -97,7 +98,7 @@ const { t } = useI18n()
   letter-spacing: 0.16em;
   color: var(--ink-faint);
   border: 1px solid var(--line-strong);
-  border-radius: 100px;
+  border-radius: 2px;
   padding: 2px 8px;
 }
 
@@ -140,7 +141,7 @@ const { t } = useI18n()
 
 .order-pill--live {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(220, 75, 46, 0.12);
+  box-shadow: var(--glow-amber);
 }
 
 .order-pill__label {
@@ -187,11 +188,69 @@ const { t } = useI18n()
 }
 
 @media (max-width: 640px) {
+  .topbar__inner {
+    height: auto;
+    min-height: 0;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .brand {
+    order: 1;
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+
+  .brand__name {
+    font-size: 19px;
+  }
+
   .brand__tag {
     display: none;
   }
+
+  .nav {
+    order: 3;
+    flex: 1 1 auto;
+    margin-left: 0;
+  }
+
+  .nav__link {
+    flex: 1;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  :deep(.lang) {
+    order: 4;
+    flex: 0 0 auto;
+  }
+
+  .order-pill {
+    order: 2;
+    height: 38px;
+    gap: 7px;
+    margin-left: auto;
+    padding: 0 8px 0 10px;
+  }
+
   .order-pill__label {
     display: none;
+  }
+
+  .order-pill__total {
+    display: none;
+  }
+
+  .main {
+    padding-top: 26px;
+    padding-bottom: 48px;
+  }
+
+  .foot {
+    padding: 20px 16px 28px;
   }
 }
 </style>
