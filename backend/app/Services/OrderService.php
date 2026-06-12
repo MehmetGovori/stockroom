@@ -5,14 +5,10 @@ namespace App\Services;
 use App\Exceptions\InsufficientStockException;
 use App\Models\Order;
 use App\Models\Product;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    /**
-     * @param  array<int, array{product_id: int, quantity: int}>  $items
-     */
     public function place(array $items): Order
     {
         $quantities = $this->mergeQuantities($items);
@@ -57,10 +53,6 @@ class OrderService
         });
     }
 
-    /**
-     * @param  array<int, array{product_id: int, quantity: int}>  $items
-     * @return array<int, int>
-     */
     private function mergeQuantities(array $items): array
     {
         $merged = [];
@@ -73,10 +65,6 @@ class OrderService
         return $merged;
     }
 
-    /**
-     * @param  Collection<int, Product>  $products
-     * @param  array<int, int>  $quantities
-     */
     private function guardAgainstShortfalls($products, array $quantities): void
     {
         $shortfalls = [];

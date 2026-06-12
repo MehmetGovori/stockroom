@@ -8,9 +8,6 @@ use RuntimeException;
 
 class InsufficientStockException extends RuntimeException
 {
-    /**
-     * @param  array<int, array{product_id: int, requested: int, available: int}>  $shortfalls
-     */
     public function __construct(public readonly array $shortfalls)
     {
         parent::__construct('One or more items are out of stock.');
