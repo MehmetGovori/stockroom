@@ -3,9 +3,12 @@ import { RouterLink, RouterView } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCartStore } from './stores/cart'
 import { money } from './lib/format'
+import LanguageSwitcher from './components/LanguageSwitcher.vue'
+import { useI18n } from 'vue-i18n'
 
 const cart = useCartStore()
 const { count, total } = storeToRefs(cart)
+const { t } = useI18n()
 </script>
 
 <template>
@@ -19,12 +22,14 @@ const { count, total } = storeToRefs(cart)
         </RouterLink>
 
         <nav class="nav">
-          <RouterLink to="/" class="nav__link">Catalog</RouterLink>
-          <RouterLink to="/orders" class="nav__link">Orders</RouterLink>
+          <RouterLink to="/" class="nav__link">{{ t('nav.catalog') }}</RouterLink>
+          <RouterLink to="/orders" class="nav__link">{{ t('nav.orders') }}</RouterLink>
         </nav>
 
+        <LanguageSwitcher />
+
         <RouterLink to="/order" class="order-pill" :class="{ 'order-pill--live': count > 0 }">
-          <span class="order-pill__label">Order</span>
+          <span class="order-pill__label">{{ t('nav.order') }}</span>
           <span class="order-pill__count mono">{{ count }}</span>
           <span class="order-pill__total mono">{{ money(total) }}</span>
         </RouterLink>
@@ -38,7 +43,7 @@ const { count, total } = storeToRefs(cart)
     </main>
 
     <footer class="shell foot">
-      <span class="mono">Stockroom — Product Inventory &amp; Order Management</span>
+      <span class="mono">{{ t('nav.footer') }}</span>
     </footer>
   </div>
 </template>

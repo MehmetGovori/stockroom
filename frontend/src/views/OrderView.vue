@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { fetchOrder } from '../api/orders'
 import { money } from '../lib/format'
 import type { Order } from '../types'
 
 const props = defineProps<{ id: string }>()
+const { t } = useI18n()
 
 const order = ref<Order | null>(null)
 const loading = ref(true)
-const error = ref<string | null>(null)
+const failed = ref(false)
 
 onMounted(async () => {
   try {
     order.value = await fetchOrder(Number(props.id))
   } catch {
-    error.value = 'Order not found.'
+    failed.value = true
   } finally {
     loading.value = false
   }
@@ -24,21 +26,21 @@ onMounted(async () => {
 
 <template>
   <section class="wrap">
-    <div v-if="loading" class="state">Loading order…</div>
-    <div v-else-if="error" class="state">{{ error }}</div>
+    <div v-if="loading" class="state">{{ t('confirmation.loading') }}</div>
+    <div v-else-if="failed" class="state">{{ t('confirmation.notFound') }}</div>
 
     <div v-else-if="order">
       <div class="confirm rise">
         <span class="check" aria-hidden="true">✓</span>
-        <p class="eyebrow">Order confirmed</p>
-        <h1 class="confirm__id mono">Order #{{ order.id }}</h1>
-        <p class="confirm__sub">Stock has been reserved and decremented.</p>
+        <p class="eyebrow">{{ t('confirmation.confirmed') }}</p>
+        <h1 class="confirm__id mono">{{ t('confirmation.orderNo', { id: order.id }) }}</h1>
+        <p class="confirm__sub">{{ t('confirmation.sub') }}</p>
       </div>
 
       <div class="card receipt rise" style="animation-delay: 0.08s">
         <div class="receipt__head">
-          <span class="eyebrow">Line items</span>
-          <span class="tag tag--ok">{{ order.status }}</span>
+          <span class="eyebrow">{{ t('confirmation.lineItems') }}</span>
+          <span class="tag tag--ok">{{ t(`status.${order.status}`) }}</span>
         </div>
         <table class="items">
           <tbody>
@@ -52,14 +54,14 @@ onMounted(async () => {
           </tbody>
         </table>
         <div class="receipt__total">
-          <span>Total</span>
+          <span>{{ t('confirmation.total') }}</span>
           <span class="mono">{{ money(order.total) }}</span>
         </div>
       </div>
 
       <div class="actions rise" style="animation-delay: 0.12s">
-        <RouterLink to="/" class="btn btn--accent">Back to catalog</RouterLink>
-        <RouterLink to="/orders" class="btn btn--ghost">View all orders</RouterLink>
+        <RouterLink to="/" class="btn btn--accent">{{ t('confirmation.backToCatalog') }}</RouterLink>
+        <RouterLink to="/orders" class="btn btn--ghost">{{ t('confirmation.viewAll') }}</RouterLink>
       </div>
     </div>
   </section>

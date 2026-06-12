@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { fetchOrders } from '../api/orders'
 import { money } from '../lib/format'
 import type { Order } from '../types'
 
+const { t } = useI18n()
 const orders = ref<Order[]>([])
 const loading = ref(true)
-const error = ref<string | null>(null)
+const failed = ref(false)
 
 onMounted(async () => {
   try {
     orders.value = await fetchOrders()
   } catch {
-    error.value = 'Unable to load orders.'
+    failed.value = true
   } finally {
     loading.value = false
   }
@@ -27,15 +29,15 @@ function summarize(order: Order): string {
 <template>
   <section>
     <header class="head rise">
-      <p class="eyebrow">History</p>
-      <h1>Orders</h1>
+      <p class="eyebrow">{{ t('orders.eyebrow') }}</p>
+      <h1>{{ t('orders.title') }}</h1>
     </header>
 
-    <p v-if="error" class="banner banner--bad">{{ error }}</p>
-    <div v-if="loading" class="state">Loading orders…</div>
+    <p v-if="failed" class="banner banner--bad">{{ t('orders.loadError') }}</p>
+    <div v-if="loading" class="state">{{ t('orders.loading') }}</div>
 
     <div v-else-if="orders.length === 0" class="state">
-      No orders yet. <RouterLink to="/" class="link">Place your first one →</RouterLink>
+      {{ t('orders.empty') }} <RouterLink to="/" class="link">{{ t('orders.placeFirst') }}</RouterLink>
     </div>
 
     <div v-else class="list">
@@ -49,7 +51,7 @@ function summarize(order: Order): string {
         <div class="order__main">
           <div class="order__top">
             <span class="order__id mono">#{{ order.id }}</span>
-            <span class="tag tag--ok">{{ order.status }}</span>
+            <span class="tag tag--ok">{{ t(`status.${order.status}`) }}</span>
           </div>
           <p class="order__items">{{ summarize(order) }}</p>
         </div>

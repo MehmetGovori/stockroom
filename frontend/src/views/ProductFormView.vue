@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { AxiosError } from 'axios'
 import { createProduct, updateProduct } from '../api/products'
 import { useProductStore } from '../stores/products'
@@ -10,6 +11,7 @@ const props = defineProps<{ id?: string }>()
 
 const router = useRouter()
 const productStore = useProductStore()
+const { t } = useI18n()
 const isEdit = ref(Boolean(props.id))
 
 const form = reactive<ProductInput>({
@@ -52,7 +54,7 @@ async function save() {
   } catch (err) {
     const axiosError = err as AxiosError<ApiError>
     errors.value = axiosError.response?.data?.errors ?? {}
-    errorMessage.value = axiosError.response?.data?.message ?? 'Could not save the product.'
+    errorMessage.value = axiosError.response?.data?.message ?? t('productForm.saveError')
   } finally {
     saving.value = false
   }
@@ -62,33 +64,33 @@ async function save() {
 <template>
   <section class="wrap">
     <header class="head rise">
-      <p class="eyebrow">{{ isEdit ? 'Edit' : 'Create' }}</p>
-      <h1>{{ isEdit ? 'Edit product' : 'New product' }}</h1>
+      <p class="eyebrow">{{ isEdit ? t('productForm.editEyebrow') : t('productForm.createEyebrow') }}</p>
+      <h1>{{ isEdit ? t('productForm.editTitle') : t('productForm.newTitle') }}</h1>
     </header>
 
     <form class="card form rise" style="animation-delay: 0.05s" @submit.prevent="save">
       <div class="field">
-        <label>Name</label>
-        <input v-model="form.name" class="input" type="text" placeholder="Brushed steel kettle" />
+        <label>{{ t('productForm.name') }}</label>
+        <input v-model="form.name" class="input" type="text" :placeholder="t('productForm.namePlaceholder')" />
         <span v-if="errors.name" class="err">{{ errors.name[0] }}</span>
       </div>
 
       <div class="grid-2">
         <div class="field">
-          <label>SKU</label>
-          <input v-model="form.sku" class="input input--mono" type="text" placeholder="KTL-0042" />
+          <label>{{ t('productForm.sku') }}</label>
+          <input v-model="form.sku" class="input input--mono" type="text" :placeholder="t('productForm.skuPlaceholder')" />
           <span v-if="errors.sku" class="err">{{ errors.sku[0] }}</span>
         </div>
         <div class="field">
-          <label>Category</label>
-          <input v-model="form.category" class="input" type="text" placeholder="Kitchen" />
+          <label>{{ t('productForm.category') }}</label>
+          <input v-model="form.category" class="input" type="text" :placeholder="t('productForm.categoryPlaceholder')" />
           <span v-if="errors.category" class="err">{{ errors.category[0] }}</span>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="field">
-          <label>Price (USD)</label>
+          <label>{{ t('productForm.price') }}</label>
           <input
             v-model.number="form.price"
             class="input input--mono"
@@ -99,7 +101,7 @@ async function save() {
           <span v-if="errors.price" class="err">{{ errors.price[0] }}</span>
         </div>
         <div class="field">
-          <label>Stock quantity</label>
+          <label>{{ t('productForm.stock') }}</label>
           <input
             v-model.number="form.stock_quantity"
             class="input input--mono"
@@ -115,9 +117,9 @@ async function save() {
 
       <div class="actions">
         <button class="btn btn--accent" type="submit" :disabled="saving">
-          {{ saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create product' }}
+          {{ saving ? t('productForm.saving') : isEdit ? t('productForm.saveChanges') : t('productForm.create') }}
         </button>
-        <RouterLink to="/" class="btn btn--ghost">Cancel</RouterLink>
+        <RouterLink to="/" class="btn btn--ghost">{{ t('productForm.cancel') }}</RouterLink>
       </div>
     </form>
   </section>

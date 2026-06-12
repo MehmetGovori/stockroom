@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { AxiosError } from 'axios'
 import { useCartStore } from '../stores/cart'
 import { createOrder } from '../api/orders'
@@ -11,6 +12,7 @@ import QtyStepper from '../components/QtyStepper.vue'
 
 const cart = useCartStore()
 const router = useRouter()
+const { t } = useI18n()
 const { lines, total, isEmpty } = storeToRefs(cart)
 
 const submitting = ref(false)
@@ -25,8 +27,7 @@ async function submit() {
     router.push({ name: 'order', params: { id: order.id } })
   } catch (err) {
     const axiosError = err as AxiosError<ApiError>
-    errorMessage.value =
-      axiosError.response?.data?.message ?? 'Could not place the order. Please try again.'
+    errorMessage.value = axiosError.response?.data?.message ?? t('review.error')
   } finally {
     submitting.value = false
   }
@@ -36,13 +37,13 @@ async function submit() {
 <template>
   <section class="wrap">
     <header class="head rise">
-      <p class="eyebrow">Checkout</p>
-      <h1>Review order</h1>
+      <p class="eyebrow">{{ t('review.eyebrow') }}</p>
+      <h1>{{ t('review.title') }}</h1>
     </header>
 
     <div v-if="isEmpty" class="state rise">
-      Your order is empty.
-      <RouterLink to="/" class="link">Browse the catalog →</RouterLink>
+      {{ t('review.empty') }}
+      <RouterLink to="/" class="link">{{ t('review.browse') }}</RouterLink>
     </div>
 
     <div v-else class="grid rise" style="animation-delay: 0.05s">
@@ -51,7 +52,7 @@ async function submit() {
           <div class="line__info">
             <span class="line__name">{{ line.product.name }}</span>
             <span class="line__sku mono">{{ line.product.sku }}</span>
-            <span class="line__unit mono">{{ money(line.product.price) }} each</span>
+            <span class="line__unit mono">{{ t('review.each', { price: money(line.product.price) }) }}</span>
           </div>
           <QtyStepper
             :model-value="line.quantity"
@@ -65,28 +66,28 @@ async function submit() {
       </div>
 
       <aside class="card summary">
-        <h3 class="summary__title">Summary</h3>
+        <h3 class="summary__title">{{ t('review.summary') }}</h3>
         <dl class="summary__rows">
           <div>
-            <dt>Lines</dt>
+            <dt>{{ t('review.lines') }}</dt>
             <dd class="mono">{{ lines.length }}</dd>
           </div>
           <div>
-            <dt>Units</dt>
+            <dt>{{ t('review.units') }}</dt>
             <dd class="mono">{{ cart.count }}</dd>
           </div>
         </dl>
         <div class="summary__total">
-          <span>Total</span>
+          <span>{{ t('review.total') }}</span>
           <span class="mono">{{ money(total) }}</span>
         </div>
 
         <p v-if="errorMessage" class="banner banner--bad">{{ errorMessage }}</p>
 
         <button class="btn btn--accent btn--block" :disabled="submitting" @click="submit">
-          {{ submitting ? 'Placing…' : 'Place order' }}
+          {{ submitting ? t('review.placing') : t('review.place') }}
         </button>
-        <RouterLink to="/" class="btn btn--ghost btn--block">Keep shopping</RouterLink>
+        <RouterLink to="/" class="btn btn--ghost btn--block">{{ t('review.keepShopping') }}</RouterLink>
       </aside>
     </div>
   </section>

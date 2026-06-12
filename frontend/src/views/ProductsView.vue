@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useProductStore } from '../stores/products'
 import { useCartStore } from '../stores/cart'
 import { money } from '../lib/format'
@@ -9,6 +10,7 @@ import StockTag from '../components/StockTag.vue'
 
 const productStore = useProductStore()
 const cart = useCartStore()
+const { t } = useI18n()
 const { items, loading, error } = storeToRefs(productStore)
 
 const search = ref('')
@@ -41,37 +43,37 @@ function inCart(productId: number): number {
   <section>
     <header class="head rise">
       <div>
-        <p class="eyebrow">Catalog</p>
-        <h1 class="head__title">Inventory</h1>
-        <p class="head__sub">Live stock across the shop floor. Add items to build an order.</p>
+        <p class="eyebrow">{{ t('products.eyebrow') }}</p>
+        <h1 class="head__title">{{ t('products.title') }}</h1>
+        <p class="head__sub">{{ t('products.subtitle') }}</p>
       </div>
-      <RouterLink to="/products/new" class="btn btn--accent">+ New product</RouterLink>
+      <RouterLink to="/products/new" class="btn btn--accent">{{ t('products.newProduct') }}</RouterLink>
     </header>
 
     <div class="filters rise" style="animation-delay: 0.05s">
-      <input v-model="search" class="input" type="search" placeholder="Search name or SKU…" />
+      <input v-model="search" class="input" type="search" :placeholder="t('products.searchPlaceholder')" />
       <select v-model="category" class="select">
-        <option value="">All categories</option>
+        <option value="">{{ t('products.allCategories') }}</option>
         <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
       </select>
     </div>
 
-    <p v-if="error" class="banner banner--bad">{{ error }}</p>
+    <p v-if="error" class="banner banner--bad">{{ t('products.loadError') }}</p>
 
-    <div v-if="loading" class="state">Loading inventory…</div>
+    <div v-if="loading" class="state">{{ t('products.loading') }}</div>
 
     <div v-else-if="filtered.length === 0" class="state">
-      No products match. <RouterLink to="/products/new" class="link">Add the first one →</RouterLink>
+      {{ t('products.empty') }} <RouterLink to="/products/new" class="link">{{ t('products.addFirst') }}</RouterLink>
     </div>
 
     <div v-else class="card table-wrap rise" style="animation-delay: 0.1s">
       <table class="ledger">
         <thead>
           <tr>
-            <th>Product</th>
-            <th>Category</th>
-            <th class="num">Price</th>
-            <th class="num">Stock</th>
+            <th>{{ t('products.colProduct') }}</th>
+            <th>{{ t('products.colCategory') }}</th>
+            <th class="num">{{ t('products.colPrice') }}</th>
+            <th class="num">{{ t('products.colStock') }}</th>
             <th class="act"></th>
           </tr>
         </thead>
@@ -88,13 +90,13 @@ function inCart(productId: number): number {
             <td class="num"><StockTag :quantity="p.stock_quantity" /></td>
             <td class="act">
               <div class="row-actions">
-                <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" title="Edit">Edit</RouterLink>
+                <RouterLink :to="`/products/${p.id}/edit`" class="icon-link" :title="t('products.edit')">{{ t('products.edit') }}</RouterLink>
                 <button
                   class="btn btn--sm"
                   :disabled="p.stock_quantity <= 0 || inCart(p.id) >= p.stock_quantity"
                   @click="cart.add(p, 1)"
                 >
-                  {{ inCart(p.id) > 0 ? `In order · ${inCart(p.id)}` : 'Add' }}
+                  {{ inCart(p.id) > 0 ? t('products.inOrder', { count: inCart(p.id) }) : t('products.add') }}
                 </button>
               </div>
             </td>

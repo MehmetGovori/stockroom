@@ -12,9 +12,3 @@ export function stockLevel(quantity: number): 'ok' | 'warn' | 'bad' {
   if (quantity <= 5) return 'warn'
   return 'ok'
 }
-
-export function stockLabel(quantity: number): string {
-  if (quantity <= 0) return 'Out of stock'
-  if (quantity <= 5) return `Low · ${quantity} left`
-  return `${quantity} in stock`
-}
